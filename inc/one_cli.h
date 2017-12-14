@@ -31,7 +31,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef int (*cli_function_t)(const char *param_string,
+typedef int (*cli_function_t)(char *param_string,
                               char *write_buffer,
                               size_t write_buffer_size);
 
@@ -46,5 +46,7 @@ int cli_register_command(struct cli_command *command);
 
 void cli_dispatch_command(char *command_string, char *output_buffer,
                           size_t output_buffer_size);
+
+char *cli_get_parameter(char *param_string, size_t param_number);
 
 #endif /* ONE_CLI_H */

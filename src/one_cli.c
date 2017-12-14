@@ -32,6 +32,7 @@
 #define ONE_CLI_MAX_NOF_COMMANDS                255
 #define ONE_CLI_MAX_COMMAND_LENGTH              40
 #define ONE_CLI_MAX_NOF_PARAMETERS              20
+#define ONE_CLI_MAX_PARAM_LEN                   20
 
 static struct cli_command cmd_list[ONE_CLI_MAX_NOF_COMMANDS];
 
@@ -64,20 +65,39 @@ void cli_dispatch_command(char *command_string, char *output_buffer,
 {
     int i;
     size_t param_count;
+    size_t cmd_len;
     char *cli_cmd;
     char *tmp;
     struct cli_command *cmd = NULL;
 
     param_count = 0;
 
-    tmp = strtok(command_string, " ");
+    cli_cmd = strtok(command_string, " ");
 
-    cli_cmd = tmp;
+    if (NULL == cli_cmd) {
+        snprintf(output_buffer, output_buffer_len,
+                 "oneCLI: Invalid command string\r\n");
+        return;
+    }
+
+    cmd_len = strlen(cli_cmd);
+
+    tmp = command_string;
 
     for (i = 0; i < ONE_CLI_MAX_NOF_PARAMETERS && NULL != tmp; i++) {
-        tmp = strtok(NULL, " ");
-        if (NULL != tmp)
+        tmp += cmd_len + 1;
+        tmp = strtok(tmp, " ");
+
+        if (NULL != tmp) {
             param_count++; 
+            cmd_len = strlen(tmp);
+
+            if (cmd_len > ONE_CLI_MAX_PARAM_LEN) {
+                snprintf(output_buffer, output_buffer_len,
+                         "oneCLI: Parameter length too long\r\n");
+                return;
+            }
+        }
     }
 
     for (i = 0; i < entry_count; i++) {
@@ -96,12 +116,39 @@ void cli_dispatch_command(char *command_string, char *output_buffer,
 
 
     if (cmd->exp_nof_params != param_count) {
-        snprintf(output_buffer, output_buffer_len, "%s", cmd->help_string);
-        printf("params %ld\r\n", param_count);
+        snprintf(output_buffer, output_buffer_len, "Expected nof params: %d. "
+                "Usage: %s", cmd->exp_nof_params, cmd->help_string);
         
         return;
     }
     
     cmd->handler(command_string, output_buffer, output_buffer_len);
+}
+
+char *cli_get_parameter(char *param_string, size_t param_number)
+{
+    int i;
+    size_t cmd_len;
+    char *param;
+    if (param_number > ONE_CLI_MAX_NOF_PARAMETERS)
+        return NULL;
+
+    if (NULL == param_string)
+        return NULL;
+
+    param = strtok(param_string, " ");
+
+    cmd_len = strlen(param);
+
+    for (i = 0; i < param_number && NULL != param; i++) {
+        param += cmd_len + 1;
+        param = strtok(param, " ");
+
+        if (NULL != param)
+            cmd_len = strlen(param);
+
+    }
+
+    return param;
 }
 
