@@ -116,8 +116,9 @@ void cli_dispatch_command(char *command_string, char *output_buffer,
 
 
     if (cmd->exp_nof_params != param_count) {
-        snprintf(output_buffer, output_buffer_len, "Expected nof params: %d. "
-                "Usage: %s", cmd->exp_nof_params, cmd->help_string);
+        snprintf(output_buffer, output_buffer_len,
+                 "Command expected %d parameters. "
+                 "Usage: %s", cmd->exp_nof_params, cmd->help_string);
         
         return;
     }
